@@ -144,18 +144,22 @@ def api_overview():
         df['Price_Clean'] = df['Price'].apply(clean_price)
         df['Mileage_Clean'] = df['Mileage'].apply(clean_mileage)
         
+        # Filter valid prices for calculations
+        valid_prices = df['Price_Clean'].dropna()
+        valid_mileage = df['Mileage_Clean'].dropna()
+        
         stats = {
-            'total_listings': len(df),
-            'unique_vehicles': df['Link'].nunique() if 'Link' in df else 0,
-            'manufacturers': df['Manufacturer'].nunique(),
-            'avg_price': round(df['Price_Clean'].mean(), 2),
-            'median_price': round(df['Price_Clean'].median(), 2),
-            'min_price': round(df['Price_Clean'].min(), 2),
-            'max_price': round(df['Price_Clean'].max(), 2),
-            'avg_mileage': round(df['Mileage_Clean'].mean(), 2),
-            'top_manufacturers': df['Manufacturer'].value_counts().head(10).to_dict(),
-            'fuel_types': df['Fuel Type'].value_counts().to_dict() if 'Fuel Type' in df else {},
-            'registration_status': df['Registration Status'].value_counts().to_dict()
+            'total_listings': int(len(df)),
+            'unique_vehicles': int(df['Link'].nunique() if 'Link' in df else 0),
+            'manufacturers': int(df['Manufacturer'].nunique()),
+            'avg_price': float(round(valid_prices.mean(), 2)) if len(valid_prices) > 0 else 0,
+            'median_price': float(round(valid_prices.median(), 2)) if len(valid_prices) > 0 else 0,
+            'min_price': float(round(valid_prices.min(), 2)) if len(valid_prices) > 0 else 0,
+            'max_price': float(round(valid_prices.max(), 2)) if len(valid_prices) > 0 else 0,
+            'avg_mileage': float(round(valid_mileage.mean(), 2)) if len(valid_mileage) > 0 else 0,
+            'top_manufacturers': {k: int(v) for k, v in df['Manufacturer'].value_counts().head(10).to_dict().items()},
+            'fuel_types': {k: int(v) for k, v in df['Fuel Type'].value_counts().to_dict().items()} if 'Fuel Type' in df else {},
+            'registration_status': {k: int(v) for k, v in df['Registration Status'].value_counts().to_dict().items()}
         }
         
         return jsonify(stats)
@@ -176,12 +180,16 @@ def api_price_trends():
             df = pd.read_csv(file)
             df['Price_Clean'] = df['Price'].apply(clean_price)
             
-            trends.append({
-                'date': date_str,
-                'avg_price': round(df['Price_Clean'].mean(), 2),
-                'median_price': round(df['Price_Clean'].median(), 2),
-                'count': len(df)
-            })
+            # Filter out NaN values
+            valid_prices = df['Price_Clean'].dropna()
+            
+            if len(valid_prices) > 0:
+                trends.append({
+                    'date': date_str,
+                    'avg_price': float(round(valid_prices.mean(), 2)),
+                    'median_price': float(round(valid_prices.median(), 2)),
+                    'count': int(len(df))
+                })
         
         return jsonify(trends)
     
@@ -197,6 +205,9 @@ def api_manufacturers():
         df = pd.concat(data_frames, ignore_index=True)
         
         df['Price_Clean'] = df['Price'].apply(clean_price)
+        
+        # Remove rows with invalid prices
+        df = df[df['Price_Clean'].notna()]
         
         manufacturer_stats = df.groupby('Manufacturer').agg({
             'Price_Clean': ['mean', 'median', 'count'],
@@ -242,6 +253,32 @@ def api_damage_analysis():
                 damage_counts[keyword] = int(count)
         
         return jsonify(damage_counts)
+    
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/v1/price-distribution')
+def api_price_distribution():
+    """Get price distribution by ranges"""
+    try:
+        recent_files = sorted(glob.glob(str(Config.DATA_RAW_DIR / "car_data_*.csv")))[-30:]
+        data_frames = [pd.read_csv(f) for f in recent_files]
+        df = pd.concat(data_frames, ignore_index=True)
+        
+        df['Price_Clean'] = df['Price'].apply(clean_price)
+        valid_prices = df['Price_Clean'].dropna()
+        
+        # Create more granular price buckets for better visualization
+        distribution = {
+            '$0-$500': int(((valid_prices >= 0) & (valid_prices < 500)).sum()),
+            '$500-$1k': int(((valid_prices >= 500) & (valid_prices < 1000)).sum()),
+            '$1k-$2k': int(((valid_prices >= 1000) & (valid_prices < 2000)).sum()),
+            '$2k-$5k': int(((valid_prices >= 2000) & (valid_prices < 5000)).sum()),
+            '$5k-$10k': int(((valid_prices >= 5000) & (valid_prices < 10000)).sum()),
+            '$10k+': int((valid_prices >= 10000).sum())
+        }
+        
+        return jsonify(distribution)
     
     except Exception as e:
         return jsonify({'error': str(e)}), 500

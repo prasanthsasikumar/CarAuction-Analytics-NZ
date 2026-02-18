@@ -63,7 +63,7 @@
 <body>
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-light sticky-top">
-        <div class="container">
+        <div class="container-fluid">
             <a class="navbar-brand" href="/">
                 <i class="fas fa-car-crash"></i> CarAuction Analytics NZ
             </a>
@@ -83,6 +83,18 @@
                     </li>
                     <li class="nav-item">
                         <a class="nav-link active" href="/api-docs">API</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="downloadDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-download"></i> Data
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="downloadDropdown">
+                            <li><a class="dropdown-item" href="https://github.com/prasadaman2000/CarAuction-Analytics-NZ/tree/main/data/raw" target="_blank"><i class="fab fa-github"></i> Raw Data (GitHub)</a></li>
+                            <li><a class="dropdown-item" href="https://github.com/prasadaman2000/CarAuction-Analytics-NZ/tree/main/data/processed" target="_blank"><i class="fab fa-github"></i> Processed Data (GitHub)</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="/api/v1/download/latest"><i class="fas fa-file-csv"></i> Latest CSV</a></li>
+                            <li><a class="dropdown-item" href="/api/v1/download/processed"><i class="fas fa-file-csv"></i> Processed CSV</a></li>
+                        </ul>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="/about">About</a>

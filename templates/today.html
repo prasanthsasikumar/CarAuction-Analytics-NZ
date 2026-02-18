@@ -30,32 +30,33 @@
         
         .stats-card {
             background: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-            margin-bottom: 20px;
+            border-radius: 5px;
+            padding: 8px 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 10px;
         }
         
         .stat-value {
-            font-size: 2rem;
+            font-size: 1.2rem;
             font-weight: 700;
             color: var(--primary-color);
         }
         
         .stat-label {
             color: #666;
-            font-size: 0.9rem;
+            font-size: 0.75rem;
         }
         
         .table-container {
             background: white;
-            border-radius: 15px;
-            padding: 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
         
         .table {
-            font-size: 0.9rem;
+            font-size: 0.85rem;
+            margin-bottom: 0;
         }
         
         .table thead {
@@ -63,15 +64,36 @@
             color: white;
         }
         
+        .table thead th {
+            padding: 8px 5px;
+            font-size: 0.8rem;
+        }
+        
+        .table tbody td {
+            padding: 6px 5px;
+        }
+        
         .table-hover tbody tr:hover {
             background-color: rgba(102, 126, 234, 0.1);
+        }
+        
+        .dataTables_wrapper {
+            font-size: 0.85rem;
+        }
+        
+        .dataTables_wrapper .dataTables_length,
+        .dataTables_wrapper .dataTables_filter,
+        .dataTables_wrapper .dataTables_info,
+        .dataTables_wrapper .dataTables_paginate {
+            font-size: 0.85rem;
+            margin-bottom: 5px;
         }
     </style>
 </head>
 <body>
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-light sticky-top">
-        <div class="container">
+        <div class="container-fluid">
             <a class="navbar-brand" href="/">
                 <i class="fas fa-car-crash"></i> CarAuction Analytics NZ
             </a>
@@ -92,6 +114,18 @@
                     <li class="nav-item">
                         <a class="nav-link" href="/api-docs">API</a>
                     </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="downloadDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-download"></i> Data
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="downloadDropdown">
+                            <li><a class="dropdown-item" href="https://github.com/prasadaman2000/CarAuction-Analytics-NZ/tree/main/data/raw" target="_blank"><i class="fab fa-github"></i> Raw Data (GitHub)</a></li>
+                            <li><a class="dropdown-item" href="https://github.com/prasadaman2000/CarAuction-Analytics-NZ/tree/main/data/processed" target="_blank"><i class="fab fa-github"></i> Processed Data (GitHub)</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="/api/v1/download/latest"><i class="fas fa-file-csv"></i> Latest CSV</a></li>
+                            <li><a class="dropdown-item" href="/api/v1/download/processed"><i class="fas fa-file-csv"></i> Processed CSV</a></li>
+                        </ul>
+                    </li>
                     <li class="nav-item">
                         <a class="nav-link" href="/about">About</a>
                     </li>
@@ -100,22 +134,22 @@
         </div>
     </nav>
 
-    <div class="container my-5">
-        <h1 class="mb-4"><i class="fas fa-calendar-day"></i> Today's Vehicle Listings</h1>
-        <p class="lead">Data as of {{ stats.file_date }}</p>
+    <div class="container-fluid px-3 my-3">
+        <h1 class="mb-2" style="font-size: 1.5rem;"><i class="fas fa-calendar-day"></i> Today's Vehicle Listings</h1>
+        <p class="mb-2" style="font-size: 0.9rem;">Data as of {{ stats.file_date }}</p>
 
         <!-- Filter Controls -->
-        <div class="mb-3">
+        <div class="mb-2">
             <div class="form-check form-check-inline">
                 <input class="form-check-input" type="checkbox" id="showRegisteredOnly">
-                <label class="form-check-label" for="showRegisteredOnly">
+                <label class="form-check-label" for="showRegisteredOnly" style="font-size: 0.9rem;">
                     Show only registered vehicles
                 </label>
             </div>
         </div>
 
         <!-- Statistics Row -->
-        <div class="row mb-4">
+        <div class="row mb-2">
             <div class="col-md-3">
                 <div class="stats-card text-center">
                     <div class="stat-value">{{ stats.total }}</div>
@@ -157,9 +191,10 @@
     <script>
         $(document).ready(function() {
             var table = $('.table').DataTable({
-                pageLength: 25,
+                pageLength: 50,
                 order: [[0, 'asc']],
-                responsive: true
+                responsive: true,
+                lengthMenu: [[25, 50, 100, -1], [25, 50, 100, "All"]]
             });
             
             // Add custom filter for registered vehicles

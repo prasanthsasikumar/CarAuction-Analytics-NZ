@@ -296,6 +296,18 @@
                     <li class="nav-item">
                         <a class="nav-link" href="/api-docs">API</a>
                     </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="downloadDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-download"></i> Data
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="downloadDropdown">
+                            <li><a class="dropdown-item" href="https://github.com/prasadaman2000/CarAuction-Analytics-NZ/tree/main/data/raw" target="_blank"><i class="fab fa-github"></i> Raw Data (GitHub)</a></li>
+                            <li><a class="dropdown-item" href="https://github.com/prasadaman2000/CarAuction-Analytics-NZ/tree/main/data/processed" target="_blank"><i class="fab fa-github"></i> Processed Data (GitHub)</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="/api/v1/download/latest"><i class="fas fa-file-csv"></i> Latest CSV</a></li>
+                            <li><a class="dropdown-item" href="/api/v1/download/processed"><i class="fas fa-file-csv"></i> Processed CSV</a></li>
+                        </ul>
+                    </li>
                     <li class="nav-item">
                         <a class="nav-link" href="/about">About</a>
                     </li>
@@ -309,6 +321,7 @@
             <h1><i class="fas fa-chart-line"></i> Analytics Dashboard</h1>
             <p class="subtitle">Comprehensive market analysis and insights</p>
             <p class="subtitle">Data Range: May 27, 2023 - February 18, 2026 | 991 Days</p>
+            <p style="font-size: 0.8rem; color: #999;">v1.1 - Updated Feb 2026</p>
         </header>
 
         <div class="missing-dates" id="missingDatesSection">
@@ -428,7 +441,10 @@
         // Fetch and display missing dates
         async function loadMissingDates() {
             try {
-                const response = await fetch('/api/missing_dates');
+                // This endpoint doesn't exist yet, so hide the section for now
+                document.getElementById('missingDatesSection').style.display = 'none';
+                return;
+                const response = await fetch('/api/v1/missing_dates');
                 const data = await response.json();
                 
                 const section = document.getElementById('missingDatesSection');
@@ -444,19 +460,29 @@
         // Fetch and display overview statistics
         async function loadOverview() {
             try {
-                const response = await fetch('/api/overview');
+                const response = await fetch('/api/v1/stats/overview');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
                 const data = await response.json();
+                console.log('Overview data received:', data);
+                
+                if (data.error) {
+                    console.error('API Error:', data.error);
+                    return;
+                }
                 
                 document.getElementById('totalListings').textContent = data.total_listings?.toLocaleString() || '-';
-                document.getElementById('uniqueCars').textContent = data.unique_cars?.toLocaleString() || '-';
+                document.getElementById('uniqueCars').textContent = data.unique_vehicles?.toLocaleString() || '-';
                 document.getElementById('avgPrice').textContent = '$' + (data.avg_price?.toLocaleString() || '-');
                 document.getElementById('totalManufacturers').textContent = data.manufacturers || '-';
                 
                 // Top manufacturers chart
-                if (data.top_manufacturers) {
+                if (data.top_manufacturers && Object.keys(data.top_manufacturers).length > 0) {
                     const labels = Object.keys(data.top_manufacturers).slice(0, 10);
                     const values = Object.values(data.top_manufacturers).slice(0, 10);
                     
+                    console.log('Creating manufacturers chart with', labels.length, 'items');
                     if (charts.manufacturers) charts.manufacturers.destroy();
                     charts.manufacturers = new Chart(document.getElementById('manufacturersChart'), {
                         type: 'bar',
@@ -481,7 +507,7 @@
                 }
                 
                 // Fuel type chart
-                if (data.fuel_types) {
+                if (data.fuel_types && Object.keys(data.fuel_types).length > 0) {
                     const labels = Object.keys(data.fuel_types);
                     const values = Object.values(data.fuel_types);
                     
@@ -516,14 +542,29 @@
         // Fetch and display price trends
         async function loadPriceTrends() {
             try {
-                const response = await fetch('/api/price_trends');
+                const response = await fetch('/api/v1/stats/price-trends');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
                 const data = await response.json();
+                console.log('Price trends data received:', data.length, 'data points');
+                
+                if (data.error) {
+                    console.error('API Error:', data.error);
+                    return;
+                }
+                
+                if (!Array.isArray(data) || data.length === 0) {
+                    console.warn('No price trends data available');
+                    return;
+                }
                 
                 const dates = data.map(d => d.date);
                 const avgPrices = data.map(d => d.avg_price);
                 const medianPrices = data.map(d => d.median_price);
                 const counts = data.map(d => d.count);
                 
+                console.log('Creating price trends chart...');
                 if (charts.priceTrends) charts.priceTrends.destroy();
                 charts.priceTrends = new Chart(document.getElementById('priceTrendsChart'), {
                     type: 'line',
@@ -581,11 +622,21 @@
         // Fetch and display manufacturer analysis
         async function loadManufacturerAnalysis() {
             try {
-                const response = await fetch('/api/manufacturer_analysis');
+                const response = await fetch('/api/v1/manufacturers');
                 const data = await response.json();
                 
-                const labels = data.map(d => d.manufacturer);
-                const avgPrices = data.map(d => d.avg_price);
+                if (data.error) {
+                    console.error('API Error:', data.error);
+                    return;
+                }
+                
+                if (!Array.isArray(data) || data.length === 0) {
+                    console.warn('No manufacturer data available');
+                    return;
+                }
+                
+                const labels = data.slice(0, 20).map(d => d.manufacturer);
+                const avgPrices = data.slice(0, 20).map(d => d.avg_price);
                 
                 if (charts.avgPriceByMfg) charts.avgPriceByMfg.destroy();
                 charts.avgPriceByMfg = new Chart(document.getElementById('avgPriceByMfgChart'), {
@@ -618,11 +669,21 @@
         // Fetch and display damage analysis
         async function loadDamageAnalysis() {
             try {
-                const response = await fetch('/api/damage_analysis');
+                const response = await fetch('/api/v1/damage-analysis');
                 const data = await response.json();
+                
+                if (data.error) {
+                    console.error('API Error:', data.error);
+                    return;
+                }
                 
                 const labels = Object.keys(data);
                 const values = Object.values(data);
+                
+                if (labels.length === 0) {
+                    console.warn('No damage data available');
+                    return;
+                }
                 
                 if (charts.damage) charts.damage.destroy();
                 charts.damage = new Chart(document.getElementById('damageChart'), {
@@ -652,12 +713,27 @@
         // Fetch and display price distribution
         async function loadPriceDistribution() {
             try {
-                const response = await fetch('/api/price_distribution');
+                const response = await fetch('/api/v1/price-distribution');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
                 const data = await response.json();
+                console.log('Price distribution data received:', data);
+                
+                if (data.error) {
+                    console.error('API Error:', data.error);
+                    return;
+                }
                 
                 const labels = Object.keys(data);
                 const values = Object.values(data);
                 
+                if (values.length === 0 || values.every(v => v === 0)) {
+                    console.warn('No price distribution data available');
+                    return;
+                }
+                
+                console.log('Creating price distribution chart...');
                 if (charts.priceDist) charts.priceDist.destroy();
                 charts.priceDist = new Chart(document.getElementById('priceDistChart'), {
                     type: 'bar',
@@ -684,12 +760,25 @@
 
         // Load all data on page load
         window.addEventListener('load', async () => {
-            await loadMissingDates();
-            await loadOverview();
-            await loadPriceTrends();
-            await loadManufacturerAnalysis();
-            await loadDamageAnalysis();
-            await loadPriceDistribution();
+            console.log('Analytics page loading - v1.1');
+            try {
+                console.log('Loading missing dates...');
+                await loadMissingDates();
+                console.log('Loading overview...');
+                await loadOverview();
+                console.log('Loading price trends...');
+                await loadPriceTrends();
+                console.log('Loading manufacturer analysis...');
+                await loadManufacturerAnalysis();
+                console.log('Loading damage analysis...');
+                await loadDamageAnalysis();
+                console.log('Loading price distribution...');
+                await loadPriceDistribution();
+                console.log('All charts loaded successfully!');
+            } catch (error) {
+                console.error('Fatal error loading analytics:', error);
+                alert('Error loading analytics data. Check console for details.');
+            }
         });
     </script>
 </body>

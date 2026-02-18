@@ -17,6 +17,8 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
             min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
         
         .navbar {
@@ -32,7 +34,7 @@
         }
         
         .hero {
-            padding: 100px 0;
+            padding: 60px 0 40px 0;
             text-align: center;
             color: white;
         }
@@ -106,27 +108,29 @@
         
         .stat-item {
             text-align: center;
-            padding: 20px;
+            padding: 20px 10px;
         }
         
         .stat-number {
             font-size: 2.5rem;
             font-weight: 700;
             color: var(--primary-color);
+            margin-bottom: 10px;
         }
         
         .stat-label {
-            font-size: 1rem;
+            font-size: 0.85rem;
             color: #666;
             text-transform: uppercase;
             letter-spacing: 1px;
+            line-height: 1.3;
         }
         
         footer {
             background: rgba(0,0,0,0.2);
             color: white;
             padding: 30px 0;
-            margin-top: 80px;
+            margin-top: auto;
         }
         
         .api-badge {
@@ -143,7 +147,7 @@
 <body>
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-light sticky-top">
-        <div class="container">
+        <div class="container-fluid">
             <a class="navbar-brand" href="/">
                 <i class="fas fa-car-crash"></i> CarAuction Analytics NZ
             </a>
@@ -162,7 +166,19 @@
                         <a class="nav-link" href="/analytics">Analytics</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/api-docs">API <span class="api-badge">REST</span></a>
+                        <a class="nav-link" href="/api-docs">API</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="downloadDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-download"></i> Data
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="downloadDropdown">
+                            <li><a class="dropdown-item" href="https://github.com/prasadaman2000/CarAuction-Analytics-NZ/tree/main/data/raw" target="_blank"><i class="fab fa-github"></i> Raw Data (GitHub)</a></li>
+                            <li><a class="dropdown-item" href="https://github.com/prasadaman2000/CarAuction-Analytics-NZ/tree/main/data/processed" target="_blank"><i class="fab fa-github"></i> Processed Data (GitHub)</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="/api/v1/download/latest"><i class="fas fa-file-csv"></i> Latest CSV</a></li>
+                            <li><a class="dropdown-item" href="/api/v1/download/processed"><i class="fas fa-file-csv"></i> Processed CSV</a></li>
+                        </ul>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="/about">About</a>
@@ -178,19 +194,11 @@
             <h1><i class="fas fa-chart-line"></i> CarAuction Analytics NZ</h1>
             <p>Comprehensive analysis of damaged vehicle auctions from Manheim New Zealand</p>
             <p class="lead">991 days of data • 460,000+ listings • Real-time insights</p>
-            <div class="mt-4">
-                <a href="/today" class="btn btn-custom me-3">
-                    <i class="fas fa-table"></i> View Today's Listings
-                </a>
-                <a href="/analytics" class="btn btn-custom">
-                    <i class="fas fa-chart-bar"></i> Explore Analytics
-                </a>
-            </div>
         </div>
     </section>
 
     <!-- Features -->
-    <section class="container my-5">
+    <section class="container">
         <div class="row">
             <div class="col-md-4">
                 <div class="feature-card">
@@ -199,7 +207,7 @@
                     </div>
                     <h3>Real-Time Data</h3>
                     <p>Access the latest vehicle listings updated daily. View comprehensive details including prices, damage descriptions, and specifications.</p>
-                    <a href="/today" class="btn btn-sm btn-outline-primary">View Listings →</a>
+                    <a href="/" class="btn btn-sm btn-outline-primary">View Listings →</a>
                 </div>
             </div>
             <div class="col-md-4">
