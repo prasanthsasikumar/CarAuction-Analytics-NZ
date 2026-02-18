@@ -24,12 +24,22 @@ current_page = 1 # Specify the value of page here
 # Format the URL with the values of N and page
 formatted_url = url.format(numberOfEntries, current_page)
 
+# Headers to mimic a real browser
+headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+    'Accept-Language': 'en-US,en;q=0.5',
+    'Accept-Encoding': 'gzip, deflate, br',
+    'Connection': 'keep-alive',
+    'Upgrade-Insecure-Requests': '1'
+}
+
 number_of_pages = count_number_of_pages(formatted_url)
 
 while current_page <= number_of_pages:
     
     # Send a GET request to the formatted_url
-    response = requests.get(formatted_url)
+    response = requests.get(formatted_url, headers=headers)
 
     # Parse the HTML content using BeautifulSoup
     soup = BeautifulSoup(response.content, "html.parser")
