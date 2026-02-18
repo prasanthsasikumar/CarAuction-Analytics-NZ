@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Cars Available Today</title>
+    <style>
+        /* Add your custom CSS styling here */
+        /* For example, you can use Bootstrap for a professional and beautiful design */
+        
+        body {
+            font-family: Arial, sans-serif;
+        }
+        
+        h1 {
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        th {
+            background-color: #f2f2f2;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .yes {
+            color: #008000;
+        }
+        
+        .no {
+            color: #FF0000;
+        }
+    </style>
+    <script>
+        var currentDate = new Date();
+        var formattedDate = currentDate.toLocaleDateString();
+        //get title element
+        var heading = document.querySelector("title");
+        heading.textContent = "Cars Available Today (" + formattedDate + ")";
+
+        function toggleRegisteredCars() {
+            var tableRows = document.querySelectorAll("table tr");
+            var toggleSwitch = document.getElementById("toggleSwitch");
+            
+            if (toggleSwitch.checked) {
+                tableRows.forEach(function(row) {
+                    //Get the value of the third column (the "Registered" column)
+                    var registeredColumn = row.children[2];
+                    console.log(registeredColumn);
+                    if (registeredColumn.textContent.toLowerCase() === "no") {
+                        row.style.display = "none";
+                    }
+                });
+            } else {
+                tableRows.forEach(function(row) {
+                    row.style.display = "";
+                });
+            }            
+            formatTableData();
+        }
+
+        function formatTableData(){
+            var tableRows = document.querySelectorAll("table tr");
+            tableRows.forEach(function(row) {
+                    //if first row, skip
+                    if (row.rowIndex === 0) {
+                        return;
+                    }
+                    //make the value in the last column a hyperlink that opens in a new tab
+                    var lastColumn = row.children[10];
+                    lastColumn.innerHTML = "<a href='" + lastColumn.textContent + "' target='_blank'>" + lastColumn.textContent + "</a>";
+                });
+        }
+        
+        document.addEventListener("DOMContentLoaded", function() {
+            var toggleSwitch = document.getElementById("toggleSwitch");
+            toggleSwitch.addEventListener("change", toggleRegisteredCars);
+            formatTableData();
+        });
+    </script>    
+</head>
+<body>
+    <h1 id="currentDate"></h1>
+    <script>
+        // Get the current date
+        var currentDate = new Date();
+      
+        // Format the date as per your requirement (e.g., "May 28, 2023")
+        var formattedDate = currentDate.toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "long",
+          day: "numeric"
+        });
+        formattedDate = "Cars Available Today (" + formattedDate + ")"
+      
+        // Update the content of the <h1> element with the formatted date
+        document.getElementById("currentDate").textContent = formattedDate;
+    </script>
+
+    <div style="text-align: center; margin-bottom: 10px;">
+        <label for="toggleSwitch" >Show only registered cars:</label>
+        <input type="checkbox" id="toggleSwitch">
+    </div>
+    
+    <table>
+        {{ table|safe }}
+    </table>
+</body>
+</html>

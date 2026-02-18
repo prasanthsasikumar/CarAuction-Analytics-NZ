@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Real-time Output Update</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            text-align: center;
+        }
+        h1 {
+            margin-top: 40px;
+            color: #333333;
+        }
+        #outputTable {
+            margin: 20px auto;
+            border-collapse: collapse;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            background-color: #ffffff;
+        }
+        #outputTable th,
+        #outputTable td {
+            padding: 10px;
+            border-bottom: 1px solid #dddddd;
+        }
+        #outputTable thead {
+            background-color: #f2f2f2;
+        }
+        #outputTable tbody tr:nth-child(even) {
+            background-color: #ffffff;
+        }
+        #outputTable tbody tr:nth-child(odd) {
+            background-color: #f9f9f9;
+        }
+        #runButton {
+            margin-top: 40px;
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: #ffffff;
+            border: none;
+            cursor: pointer;
+        }
+        #runButton:hover {
+            background-color: #45a049;
+        }
+        .hidden {
+            display: none;
+        }
+        #statusContainer {
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #statusTitle {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        #statusTextbox {
+            width: 400px;
+            height: 100px;
+            padding: 10px;
+            resize: none;
+            border: 1px solid #dddddd;
+            background-color: #ffffff;
+        }
+        #stopButton {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #f44336;
+            color: #ffffff;
+            border: none;
+            cursor: pointer;
+        }
+        #stopButton:hover {
+            background-color: #d32f2f;
+        }
+    </style>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+       $(document).ready(function () {
+
+            // Function to update the output and status
+            function updateOutput() {
+
+                $.ajax({
+                    url: "/output",
+                    dataType: "json",
+                    success: function (data) {
+                        // Show headers only once the data starts streaming
+                        if ($("#outputTable tbody tr").length === 0) {
+                            $("#outputTable thead").show();
+                        }
+
+                        // Clear the existing table rows
+                        $("#outputTable tbody").empty();
+                        // Append each entry as a new row with columns
+                        $.each(data, function (index, entry) {
+                            var columns = entry.slice(0, 10); // Get the first 10 columns
+                            var tableRow = "<tr>";
+                            $.each(columns, function (i, column) {
+                                // Append each column as a new table cell as long as the value of i is less than 9
+                                if (i < 9) {
+                                    tableRow += "<td>" + column.trim() + "</td>";
+                                }
+                            });
+
+                            // Make the 10th column clickable
+                            var linkColumn = columns[9].trim();
+                            tableRow += '<td><a href="' + linkColumn + '" target="_blank">' + linkColumn + '</a></td>';
+                            tableRow += "</tr>";
+                            $("#outputTable tbody").append(tableRow);
+                        });
+
+                        if (data.length > 0) {
+                            //$("#runButton").addClass("hidden");
+                        }
+
+                        setTimeout(updateOutput, 1000); // Refresh every 1 second
+                    },
+                });
+
+                // Update the status textbox
+                $.ajax({
+                    url: "/status",
+                    success: function (status) {
+                        $("#statusTextbox").val(status);
+                    },
+                });
+            }
+
+            // Attach a click event handler to the run button
+            $("#runButton").click(function () {
+                //$("#runButton").hide();
+                $.post("/run_main");
+                $("#stopButton").removeClass("hidden");
+                $("#outputTable").removeClass("hidden");
+            });
+
+            // Attach a click event handler to the stop button
+            $("#stopButton").click(function () {
+                $.ajax({
+                    url: "/stop_main",
+                });
+                $("#runButton").show();
+            });
+
+            // Start updating the output and status
+            updateOutput();
+        });
+
+    </script>
+</head>
+<body>
+    <h1>Auto Crawler for Manheim New Zealand</h1>
+    <table id="outputTable" class="hidden">
+        <thead style="display: none;">
+            <tr>
+                <th>Manufacturer</th>
+                <th>Model</th>
+                <th>Registration Status</th>
+                <th>Price</th>
+                <th>Mileage</th>
+                <th>Keys</th>
+                <th>Transmission</th>
+                <th>Seats</th>
+                <th>Fuel Type</th>
+                <th>Link</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+    <button id="runButton">(Re)Start Crawling</button>
+    <div id="statusContainer">
+        <h2 id="statusTitle">Status</h2>
+        <textarea id="statusTextbox" readonly></textarea>
+    </div>
+    <button id="stopButton" class="">Stop</button>
+    <a href="/download" class="btn btn-primary">Download Latest CSV</a>
+</body>
+</html>

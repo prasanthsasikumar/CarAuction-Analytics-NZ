@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Today's Listings - CarAuction Analytics NZ</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    <style>
+        :root {
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+        
+        .navbar {
+            background: white !important;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .navbar-brand {
+            font-weight: 700;
+            color: var(--primary-color) !important;
+        }
+        
+        .stats-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .table-container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .table {
+            font-size: 0.9rem;
+        }
+        
+        .table thead {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .table-hover tbody tr:hover {
+            background-color: rgba(102, 126, 234, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-car-crash"></i> CarAuction Analytics NZ
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/">Today's Listings</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/home">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/analytics">Analytics</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/api-docs">API</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/about">About</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container my-5">
+        <h1 class="mb-4"><i class="fas fa-calendar-day"></i> Today's Vehicle Listings</h1>
+        <p class="lead">Data as of {{ stats.file_date }}</p>
+
+        <!-- Filter Controls -->
+        <div class="mb-3">
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" id="showRegisteredOnly">
+                <label class="form-check-label" for="showRegisteredOnly">
+                    Show only registered vehicles
+                </label>
+            </div>
+        </div>
+
+        <!-- Statistics Row -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="stats-card text-center">
+                    <div class="stat-value">{{ stats.total }}</div>
+                    <div class="stat-label">Total Listings</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card text-center">
+                    <div class="stat-value">${{ stats.avg_price }}</div>
+                    <div class="stat-label">Average Price</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card text-center">
+                    <div class="stat-value">{{ stats.registered }}</div>
+                    <div class="stat-label">Registered</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card text-center">
+                    <div class="stat-value">{{ stats.top_manufacturer }}</div>
+                    <div class="stat-label">Top Manufacturer</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div class="table-container">
+            <div class="table-responsive">
+                {{ table|safe }}
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            var table = $('.table').DataTable({
+                pageLength: 25,
+                order: [[0, 'asc']],
+                responsive: true
+            });
+            
+            // Add custom filter for registered vehicles
+            $.fn.dataTable.ext.search.push(
+                function(settings, data, dataIndex) {
+                    var showRegisteredOnly = $('#showRegisteredOnly').is(':checked');
+                    
+                    if (!showRegisteredOnly) {
+                        return true; // show all rows
+                    }
+                    
+                    // Find Registration Status column (typically column 2)
+                    // Check multiple possible column positions
+                    for (var i = 0; i < data.length; i++) {
+                        if (data[i].toLowerCase().includes('yes') && i >= 2 && i <= 5) {
+                            return true;
+                        }
+                    }
+                    return false;
+                }
+            );
+            
+            $('#showRegisteredOnly').on('change', function() {
+                table.draw();
+            });
+        });
+    </script>
+</body>
+</html>

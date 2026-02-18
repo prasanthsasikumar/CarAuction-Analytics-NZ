@@ -1,0 +1,21 @@
+Car Auction Data - Cleaning Summary
+==================================================
+
+Total Records: 459,809
+Unique Vehicles: N/A
+Date Range: 2023-05-27 00:00:00 to 2026-02-18 00:00:00
+Manufacturers: 503
+Average Price: $497.47
+Median Price: $200.00
+
+Top 10 Manufacturers:
+  Toyota: 95,817
+  Mazda: 63,170
+  Nissan: 58,946
+  Honda: 39,470
+  Suzuki: 28,425
+  Mitsubishi: 19,374
+  Subaru: 18,550
+  Ford: 17,073
+  Holden: 12,637
+  BMW: 11,665
