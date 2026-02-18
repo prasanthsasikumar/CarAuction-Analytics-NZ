@@ -7,13 +7,21 @@ from CSVSaver import CarDataWriter
 from PageLengthFinder import count_number_of_pages
 import json
 import datetime
+import os
+from pathlib import Path
 
 # Get today's date
 today = datetime.date.today()
-# Create the filename with today's date
-filename = f"car_data_{today}.csv"
+
+# Ensure data/raw directory exists
+data_dir = Path(__file__).parent.parent.parent / "data" / "raw"
+data_dir.mkdir(parents=True, exist_ok=True)
+
+# Create the filename with today's date in data/raw/
+filename = data_dir / f"car_data_{today}.csv"
+
 # Create an instance of CarDataWriter with the filename
-writer = CarDataWriter(filename)
+writer = CarDataWriter(str(filename))
 writer.initialize()
 
 url = "https://manheim.co.nz/damaged-vehicles/search?PageNumber=1&RecordsPerPage={}&searchType=Z&page={}"
