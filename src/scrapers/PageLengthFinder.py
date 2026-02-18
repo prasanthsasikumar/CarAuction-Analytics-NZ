@@ -1,5 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
+import time
 
 def count_number_of_pages(url):
     # Headers to mimic a real browser
@@ -9,13 +10,36 @@ def count_number_of_pages(url):
         'Accept-Language': 'en-US,en;q=0.5',
         'Accept-Encoding': 'gzip, deflate, br',
         'Connection': 'keep-alive',
-        'Upgrade-Insecure-Requests': '1'
+        'Upgrade-Insecure-Requests': '1',
+        'Referer': 'https://manheim.co.nz/',
+        'Sec-Fetch-Dest': 'document',
+        'Sec-Fetch-Mode': 'navigate',
+        'Sec-Fetch-Site': 'same-origin'
     }
     
-    # Send a GET request to the specified URL
-    response = requests.get(url, headers=headers)
-
-    # Check if the request was successful
+    # Retry logic with exponential backoff
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            # Send a GET request to the specified URL with timeout
+            response = requests.get(url, headers=headers, timeout=30)
+            
+            # Check if the request was successful
+            if response.status_code == 200:
+                break
+            elif attempt < max_retries - 1:
+                wait_time = (attempt + 1) * 5
+                print(f"Got status {response.status_code}, retrying in {wait_time}s... (attempt {attempt + 1}/{max_retries})")
+                time.sleep(wait_time)
+        except requests.exceptions.RequestException as e:
+            if attempt < max_retries - 1:
+                wait_time = (attempt + 1) * 5
+                print(f"Request failed: {e}, retrying in {wait_time}s... (attempt {attempt + 1}/{max_retries})")
+                time.sleep(wait_time)
+            else:
+                print(f"Failed after {max_retries} attempts: {e}")
+                return 0
+    
     if response.status_code == 200:
         # Parse the HTML content of the page
         soup = BeautifulSoup(response.text, 'html.parser')

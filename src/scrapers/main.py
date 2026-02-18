@@ -8,6 +8,7 @@ from PageLengthFinder import count_number_of_pages
 import json
 import datetime
 import os
+import time
 from pathlib import Path
 
 # Get today's date
@@ -39,15 +40,52 @@ headers = {
     'Accept-Language': 'en-US,en;q=0.5',
     'Accept-Encoding': 'gzip, deflate, br',
     'Connection': 'keep-alive',
-    'Upgrade-Insecure-Requests': '1'
+    'Upgrade-Insecure-Requests': '1',
+    'Referer': 'https://manheim.co.nz/',
+    'Sec-Fetch-Dest': 'document',
+    'Sec-Fetch-Mode': 'navigate',
+    'Sec-Fetch-Site': 'same-origin'
 }
+
+# Create a session to persist cookies
+session = requests.Session()
+session.headers.update(headers)
 
 number_of_pages = count_number_of_pages(formatted_url)
 
 while current_page <= number_of_pages:
     
-    # Send a GET request to the formatted_url
-    response = requests.get(formatted_url, headers=headers)
+    # Add delay between pages to avoid rate limiting
+    if current_page > 1:
+        time.sleep(2)
+    
+    # Send a GET request to the formatted_url with retry logic
+    max_retries = 3
+    response = None
+    for attempt in range(max_retries):
+        try:
+            response = session.get(formatted_url, timeout=30)
+            if response.status_code == 200:
+                break
+            elif attempt < max_retries - 1:
+                wait_time = (attempt + 1) * 5
+                print(f"Page {current_page} got status {response.status_code}, retrying in {wait_time}s...")
+                time.sleep(wait_time)
+        except requests.exceptions.RequestException as e:
+            if attempt < max_retries - 1:
+                wait_time = (attempt + 1) * 5
+                print(f"Page {current_page} request failed, retrying in {wait_time}s...")
+                time.sleep(wait_time)
+            else:
+                print(f"Failed to fetch page {current_page} after {max_retries} attempts")
+                writer.wrap_up()
+                exit(1)
+    
+    if not response or response.status_code != 200:
+        print(f"Failed to fetch page {current_page}, skipping...")
+        current_page += 1
+        formatted_url = url.format(numberOfEntries, current_page)
+        continue
 
     # Parse the HTML content using BeautifulSoup
     soup = BeautifulSoup(response.content, "html.parser")
@@ -122,6 +160,8 @@ while current_page <= number_of_pages:
             price = span_id.get_text(strip=True) if span_id else "N/A"
 
             # Call the scrape_vehicle_page() function from ScrapeVehiclePage.py
+            # Add small delay between vehicle page requests
+            time.sleep(0.5)
             json_data = scrape_vehicle_page(href)
             
             # Display the results

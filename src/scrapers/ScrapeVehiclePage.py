@@ -1,6 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 import json
+import time
 
 def scrape_vehicle_page(url):
     # Headers to mimic a real browser
@@ -10,11 +11,37 @@ def scrape_vehicle_page(url):
         'Accept-Language': 'en-US,en;q=0.5',
         'Accept-Encoding': 'gzip, deflate, br',
         'Connection': 'keep-alive',
-        'Upgrade-Insecure-Requests': '1'
+        'Upgrade-Insecure-Requests': '1',
+        'Referer': 'https://manheim.co.nz/damaged-vehicles/search',
+        'Sec-Fetch-Dest': 'document',
+        'Sec-Fetch-Mode': 'navigate',
+        'Sec-Fetch-Site': 'same-origin'
     }
     
-    # Send a GET request to the URL
-    response = requests.get(url, headers=headers)
+    # Retry logic with exponential backoff
+    max_retries = 3
+    response = None
+    for attempt in range(max_retries):
+        try:
+            # Send a GET request to the URL with timeout
+            response = requests.get(url, headers=headers, timeout=30)
+            if response.status_code == 200:
+                break
+            elif attempt < max_retries - 1:
+                wait_time = (attempt + 1) * 3
+                print(f"Vehicle page got status {response.status_code}, retrying in {wait_time}s...")
+                time.sleep(wait_time)
+        except requests.exceptions.RequestException as e:
+            if attempt < max_retries - 1:
+                wait_time = (attempt + 1) * 3
+                print(f"Vehicle page request failed, retrying in {wait_time}s...")
+                time.sleep(wait_time)
+            else:
+                print(f"Failed to fetch vehicle page after {max_retries} attempts")
+                return json.dumps({"Vehicle Comments": "N/A", "Vehicle Location": "N/A", "Vehicle Info": "N/A", "Vehicle Details": "N/A", "Vehicle Damage": "N/A"})
+    
+    if not response or response.status_code != 200:
+        return json.dumps({"Vehicle Comments": "N/A", "Vehicle Location": "N/A", "Vehicle Info": "N/A", "Vehicle Details": "N/A", "Vehicle Damage": "N/A"})
     
     # Parse the HTML content using BeautifulSoup
     soup = BeautifulSoup(response.content, "html.parser")
