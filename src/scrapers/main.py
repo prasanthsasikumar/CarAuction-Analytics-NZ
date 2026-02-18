@@ -135,7 +135,13 @@ while current_page <= number_of_pages:
             return damage   
         
         elif parameter == "Registration Status":
-            registered = "Yes" if comments.find("Selling Registered") != -1 else "No"
+            # Check for De-Registered first to avoid substring matching issue
+            if comments.find("Selling De-Registered") != -1:
+                registered = "No"
+            elif comments.find("Selling Registered") != -1:
+                registered = "Yes"
+            else:
+                registered = "No"
             return registered
         
         else:

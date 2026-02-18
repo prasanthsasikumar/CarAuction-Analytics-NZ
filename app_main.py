@@ -96,8 +96,19 @@ def view_today():
             'top_manufacturer': data['Manufacturer'].mode()[0] if not data.empty else 'N/A'
         }
         
+        # Reorder columns: priority columns first, then the rest
+        priority_columns = ['Manufacturer', 'Model', 'Price', 'Mileage', 'Damage description', 'Link']
+        other_columns = [col for col in data.columns if col not in priority_columns]
+        columns_order = priority_columns + other_columns
+        display_data = data[columns_order].copy()
+        
+        # Make links clickable
+        display_data['Link'] = display_data['Link'].apply(
+            lambda x: f'<a href="{x}" target="_blank">View</a>' if pd.notna(x) else ''
+        )
+        
         # Convert to HTML table
-        table_html = data.to_html(index=False, classes='table table-striped table-hover', 
+        table_html = display_data.to_html(index=False, classes='table table-striped table-hover', 
                                    escape=False, border=0)
         
         return render_template('today.html', table=table_html, stats=stats)

@@ -141,7 +141,7 @@
         <!-- Filter Controls -->
         <div class="mb-2">
             <div class="form-check form-check-inline">
-                <input class="form-check-input" type="checkbox" id="showRegisteredOnly">
+                <input class="form-check-input" type="checkbox" id="showRegisteredOnly" checked>
                 <label class="form-check-label" for="showRegisteredOnly" style="font-size: 0.9rem;">
                     Show only registered vehicles
                 </label>
@@ -206,10 +206,9 @@
                         return true; // show all rows
                     }
                     
-                    // Find Registration Status column (typically column 2)
-                    // Check multiple possible column positions
+                    // Find Registration Status column - check all columns
                     for (var i = 0; i < data.length; i++) {
-                        if (data[i].toLowerCase().includes('yes') && i >= 2 && i <= 5) {
+                        if (data[i].toLowerCase().trim() === 'yes') {
                             return true;
                         }
                     }
@@ -220,6 +219,11 @@
             $('#showRegisteredOnly').on('change', function() {
                 table.draw();
             });
+            
+            // Apply filter on initial load if checkbox is checked
+            if ($('#showRegisteredOnly').is(':checked')) {
+                table.draw();
+            }
         });
     </script>
 </body>

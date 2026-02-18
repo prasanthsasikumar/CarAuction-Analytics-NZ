@@ -81,14 +81,16 @@ def load_all_data():
     """Load all CSV files with date information"""
     print("Loading CSV files...")
     all_data = []
-    csv_files = sorted(glob.glob('car_data_*.csv'))
+    csv_files = sorted(glob.glob('data/raw/car_data_*.csv'))
     
     total_files = len(csv_files)
     for idx, file in enumerate(csv_files, 1):
         if idx % 50 == 0:
             print(f"  Loaded {idx}/{total_files} files...")
         
-        date_str = file.replace('car_data_', '').replace('.csv', '')
+        # Extract date from filename, handle both Windows and Unix path separators
+        basename = os.path.basename(file)
+        date_str = basename.replace('car_data_', '').replace('.csv', '')
         try:
             date = datetime.strptime(date_str, '%Y-%m-%d')
             df = pd.read_csv(file)
@@ -280,20 +282,20 @@ def export_data(public_df, daily_stats, mfg_trends):
     print("\nExporting data...")
     
     # Create output directory
-    os.makedirs('cleaned_data', exist_ok=True)
+    os.makedirs('data/processed', exist_ok=True)
     
     # CSV exports
-    public_df.to_csv('cleaned_data/car_auction_public.csv', index=False)
-    daily_stats.to_csv('cleaned_data/daily_statistics.csv', index=False)
-    mfg_trends.to_csv('cleaned_data/manufacturer_trends.csv', index=False)
+    public_df.to_csv('data/processed/car_auction_public.csv', index=False)
+    daily_stats.to_csv('data/processed/daily_statistics.csv', index=False)
+    mfg_trends.to_csv('data/processed/manufacturer_trends.csv', index=False)
     print("✓ Exported CSV files")
     
     # Parquet exports (compressed)
-    public_df.to_parquet('cleaned_data/car_auction_public.parquet', index=False, compression='snappy')
+    public_df.to_parquet('data/processed/car_auction_public.parquet', index=False, compression='snappy')
     print("✓ Exported Parquet files")
     
     # SQLite database
-    conn = sqlite3.connect('cleaned_data/car_auction_data.db')
+    conn = sqlite3.connect('data/processed/car_auction_data.db')
     public_df.to_sql('listings', conn, if_exists='replace', index=False)
     daily_stats.to_sql('daily_stats', conn, if_exists='replace', index=False)
     mfg_trends.to_sql('manufacturer_trends', conn, if_exists='replace', index=False)
@@ -301,7 +303,7 @@ def export_data(public_df, daily_stats, mfg_trends):
     print("✓ Exported SQLite database")
     
     # Summary report
-    with open('cleaned_data/DATA_SUMMARY.txt', 'w') as f:
+    with open('data/processed/DATA_SUMMARY.txt', 'w') as f:
         f.write("Car Auction Data - Cleaning Summary\n")
         f.write("=" * 50 + "\n\n")
         f.write(f"Total Records: {len(public_df):,}\n")
@@ -315,7 +317,7 @@ def export_data(public_df, daily_stats, mfg_trends):
             f.write(f"  {mfg}: {count:,}\n")
     
     print("✓ Created summary report")
-    print(f"\n📁 All files saved to: cleaned_data/")
+    print(f"\n📁 All files saved to: data/processed/")
 
 def main():
     """Execute complete data cleaning pipeline"""
