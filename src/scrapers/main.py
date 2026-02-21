@@ -135,10 +135,12 @@ while current_page <= number_of_pages:
             return damage   
         
         elif parameter == "Registration Status":
+            # Check both comments AND damage description for registration status
             # Check for De-Registered first to avoid substring matching issue
-            if comments.find("Selling De-Registered") != -1:
+            combined_text = comments + " " + damage
+            if "Selling De-Registered" in combined_text or "De-Registered" in combined_text:
                 registered = "No"
-            elif comments.find("Selling Registered") != -1:
+            elif "Selling Registered" in combined_text:
                 registered = "Yes"
             else:
                 registered = "No"
